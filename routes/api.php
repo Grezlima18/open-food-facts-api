@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProductController;
+use App\Models\ImportHistory;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,9 +16,13 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
+    $lastImport = ImportHistory::latest('imported_at')->first();
+
     return response()->json([
         'status' => 'API is running',
-        'last_cron_execution' => now()->subDay(), // Placeholder
+        'last_cron_execution' => $lastImport->imported_at ?? 'Never',
+        'last_import_status' => $lastImport->status ?? 'No history',
+        'products_imported' => $lastImport->products_imported ?? 0,
     ]);
 });
 
