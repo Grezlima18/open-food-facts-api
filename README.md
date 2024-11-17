@@ -1,89 +1,87 @@
-# Backend Challenge 20230105
 
-## Introdução
+# Open Foods API
 
-Nesse desafio trabalharemos no desenvolvimento de uma REST API para utilizar os dados do projeto Open Food Facts, que é um banco de dados aberto com informação nutricional de diversos produtos alimentícios.
+Este projeto foi desenvolvido como parte de um desafio técnico para construir uma REST API que utiliza dados do Open Food Facts. O objetivo é fornecer suporte à equipe de nutricionistas da Open Foods LC, permitindo que revisem rapidamente as informações nutricionais de produtos alimentícios enviados pelos usuários.
 
-O projeto tem como objetivo dar suporte a equipe de nutricionistas da empresa Fitness Foods LC para que eles possam revisar de maneira rápida a informação nutricional dos alimentos que os usuários publicam pela aplicação móvel.
+---
 
-### Antes de começar
- 
-- O projeto deve utilizar a Linguagem específica na avaliação. Por exempo: Python, R, Scala e entre outras;
-- Considere como deadline da avaliação a partir do início do teste. Caso tenha sido convidado a realizar o teste e não seja possível concluir dentro deste período, avise a pessoa que o convidou para receber instruções sobre o que fazer.
-- Documentar todo o processo de investigação para o desenvolvimento da atividade (README.md no seu repositório); os resultados destas tarefas são tão importantes do que o seu processo de pensamento e decisões à medida que as completa, por isso tente documentar e apresentar os seus hipóteses e decisões na medida do possível.
+## **Instalação**
 
-## O projeto
- 
-- Criar um banco de dados MongoDB usando Atlas: https://www.mongodb.com/cloud/atlas ou algum Banco de Dados SQL se não sentir confortável com NoSQL;
-- Criar uma REST API com as melhores práticas de desenvolvimento, Design Patterns, SOLID e DDD.
-- Integrar a API com o banco de dados criado para persistir os dados
-- Recomendável usar Drivers oficiais para integração com o DB
-- Desenvolver Testes Unitários
+### **Requisitos**
+Certifique-se de que seu ambiente atenda aos seguintes requisitos antes de prosseguir:
+- PHP 7.4.33
+- Composer
+- PostgreSQL
+- Laravel 8
 
-### Modelo de Dados:
+### **Passos para instalar**
 
-Para a definição do modelo, consultar o arquivo [products.json](./products.json) que foi exportado do Open Food Facts, um detalhe importante é que temos dois campos personalizados para poder fazer o controle interno do sistema e que deverão ser aplicados em todos os alimentos no momento da importação, os campos são:
+1. **Clone o repositório**
+   ```bash
+   git clone https://github.com/grezlima18/open-foods-api.git
+   cd open-foods-api
+   ```
 
-- `imported_t`: campo do tipo Date com a dia e hora que foi importado;
-- `status`: campo do tipo Enum com os possíveis valores draft, trash e published;
+2. **Instale as dependências**
+   ```bash
+   composer install
+   ```
 
-### Sistema do CRON
+3. **Configure o arquivo `.env`**
+   Copie o exemplo de configuração:
+   ```bash
+   cp .env.example .env
+   ```
+   Atualize as variáveis no arquivo `.env` para refletir suas configurações locais:
+   - `DB_CONNECTION=pgsql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+   - `APP_URL` para refletir a URL do ambiente local.
 
-Para prosseguir com o desafio, precisaremos criar na API um sistema de atualização que vai importar os dados para a Base de Dados com a versão mais recente do [Open Food Facts](https://br.openfoodfacts.org/data) uma vez ao día. Adicionar aos arquivos de configuração o melhor horário para executar a importação.
+4. **Gere a chave da aplicação**
+   ```bash
+   php artisan key:generate
+   ```
 
-A lista de arquivos do Open Food, pode ser encontrada em: 
+5. **Configure o banco de dados**
+   Crie o banco de dados no PostgreSQL e execute as migrações:
+   ```bash
+   php artisan migrate
+   ```
 
-- https://challenges.coode.sh/food/data/json/index.txt
-- https://challenges.coode.sh/food/data/json/data-fields.txt
+6. **Inicie o servidor**
+   ```bash
+   php artisan serve
+   ```
+   Acesse a aplicação em [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-Onde cada linha representa um arquivo que está disponível em https://challenges.coode.sh/food/data/json/{filename}.
+---
 
-É recomendável utilizar uma Collection secundária para controlar os históricos das importações e facilitar a validação durante a execução.
+## **Funcionalidades da API**
 
-Ter em conta que:
+- **GET** `/products`: Lista todos os produtos disponíveis.
+- **POST** `/products`: Adiciona um novo produto com informações nutricionais.
+- **GET** `/products/{id}`: Obtém detalhes de um produto específico.
+- **PUT** `/products/{id}`: Atualiza as informações nutricionais de um produto.
+- **DELETE** `/products/{id}`: Remove um produto.
 
-- Todos os produtos deverão ter os campos personalizados `imported_t` e `status`.
-- Limitar a importação a somente 100 produtos de cada arquivo.
+---
 
-### A REST API
+## **Configuração do Cron**
 
-Na REST API teremos um CRUD com os seguintes endpoints:
+A aplicação inclui uma tarefa agendada para sincronizar os dados do Open Food Facts automaticamente. Este processo garante que as informações estejam sempre atualizadas.
 
- - `GET /`: Detalhes da API, se conexão leitura e escritura com a base de dados está OK, horário da última vez que o CRON foi executado, tempo online e uso de memória.
- - `PUT /products/:code`: Será responsável por receber atualizações do Projeto Web
- - `DELETE /products/:code`: Mudar o status do produto para `trash`
- - `GET /products/:code`: Obter a informação somente de um produto da base de dados
- - `GET /products`: Listar todos os produtos da base de dados, adicionar sistema de paginação para não sobrecarregar o `REQUEST`.
+### **Como funciona**
+- O comando `sync:openfoodfacts` sincroniza dados do Open Food Facts com a base local.
+- A sincronização é agendada para rodar diariamente à meia-noite utilizando o Laravel Scheduler.
 
-## Extras
+### **Configuração no Servidor**
+1. Configure o cron job para rodar o scheduler do Laravel. Edite o crontab:
+   ```bash
+   crontab -e
+   ```
 
-- **Diferencial 1** Configuração de um endpoint de busca com Elastic Search ou similares;
-- **Diferencial 2** Configurar Docker no Projeto para facilitar o Deploy da equipe de DevOps;
-- **Diferencial 3** Configurar um sistema de alerta se tem algum falho durante o Sync dos produtos;
-- **Diferencial 4** Descrever a documentação da API utilizando o conceito de Open API 3.0;
-- **Diferencial 5** Escrever Unit Tests para os endpoints  GET e PUT do CRUD;
-- **Diferencial 6** Escrever um esquema de segurança utilizando `API KEY` nos endpoints. Ref: https://learning.postman.com/docs/sending-requests/authorization/#api-key
+2. Adicione a seguinte linha ao arquivo do crontab:
+   ```bash
+   * * * * * cd /caminho/para/seu/projeto && php artisan schedule:run >> /dev/null 2>&1
+   ```
 
-
-
-## Readme do Repositório
-
-- Deve conter o título do projeto
-- Uma descrição sobre o projeto em frase
-- Deve conter uma lista com linguagem, framework e/ou tecnologias usadas
-- Como instalar e usar o projeto (instruções)
-- Não esqueça o [.gitignore](https://www.toptal.com/developers/gitignore)
-- Se está usando github pessoal, referencie que é um challenge by coodesh:  
-
->  This is a challenge by [Coodesh](https://coodesh.com/)
-
-## Finalização e Instruções para a Apresentação
-
-1. Adicione o link do repositório com a sua solução no teste
-2. Adicione o link da apresentação do seu projeto no README.md.
-3. Verifique se o Readme está bom e faça o commit final em seu repositório;
-4. Envie e aguarde as instruções para seguir. Sucesso e boa sorte. =)
-
-## Suporte
-
-Use a [nossa comunidade](https://discord.gg/rdXbEvjsWu) para tirar dúvidas sobre o processo ou envie uma mensagem diretamente a um especialista no chat da plataforma. 
+3. O comando acima verifica a cada minuto se há tarefas agendadas para serem executadas.
